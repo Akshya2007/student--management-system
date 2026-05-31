@@ -1,0 +1,82 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+
+using namespace std;
+
+struct Student {
+    int id;
+    char name[50];
+    int age;
+    char course[50];
+};
+
+void addStudent() {
+    Student s;
+    ofstream outfile("students.dat", ios::binary | ios::app);
+    
+    cout << "Enter ID: "; cin >> s.id;
+    cout << "Enter Name: "; cin.ignore(); cin.getline(s.name, 50);
+    cout << "Enter Age: "; cin >> s.age;
+    cout << "Enter Course: "; cin.ignore(); cin.getline(s.course, 50);
+    
+    outfile.write(reinterpret_cast<char*>(&s), sizeof(Student));
+    outfile.close();
+    cout << "Record added successfully!\n";
+}
+
+void displayStudents() {
+    Student s;
+    ifstream infile("students.dat", ios::binary);
+    if (!infile) { cout << "No records found.\n"; return; }
+    
+    cout << "\n--- Student Records ---\n";
+    while (infile.read(reinterpret_cast<char*>(&s), sizeof(Student))) {
+        cout << "ID: " << s.id << " | Name: " << s.name << " | Age: " << s.age << " | Course: " << s.course << endl;
+    }
+    infile.close();
+}
+
+void deleteStudent() {
+    int id;
+    cout << "Enter ID to delete: "; cin >> id;
+    
+    ifstream infile("students.dat", ios::binary);
+    ofstream outfile("temp.dat", ios::binary);
+    Student s;
+    bool found = false;
+
+    while (infile.read(reinterpret_cast<char*>(&s), sizeof(Student))) {
+        if (s.id != id) {
+            outfile.write(reinterpret_cast<char*>(&s), sizeof(Student));
+        } else {
+            found = true;
+        }
+    }
+    infile.close();
+    outfile.close();
+    
+    remove("students.dat");
+    rename("temp.dat", "students.dat");
+    
+    if (found) cout << "Record deleted.\n";
+    else cout << "Record not found.\n";
+}
+
+int main() {
+    int choice;
+    while (true) {
+        cout << "\n1. Add Student\n2. Display All\n3. Delete Student\n4. Exit\nChoice: ";
+        cin >> choice;
+        
+        switch (choice) {
+            case 1: addStudent(); break;
+            case 2: displayStudents(); break;
+            case 3: deleteStudent(); break;
+            case 4: return 0;
+            default: cout << "Invalid choice!\n";
+        }
+    }
+    return 0;
+}
+
